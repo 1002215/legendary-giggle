@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from matplotlib import pyplot as plt
+#from matplotlib import pyplot as plt
 
 # https://forum.opencv.org/t/detecting-the-center-of-a-curved-thick-line-in-python-using-opencv/1909
 
@@ -33,6 +33,11 @@ def detect(image):
 
     # thin image to find clear contours
     thin = cv2.ximgproc.thinning(thin, thinningType=cv2.ximgproc.THINNING_GUOHALL)
+
+    #index = [-1]
+    #print(thin)
+    #thin = np.delete(thin, index)
+    #print(thin)
     cv2.imshow("thin", thin)
 
     # dind contours
@@ -46,8 +51,15 @@ def detect(image):
     top = tuple(c[c[:, :, 1].argmin()][0])
     bottom = tuple(c[c[:, :, 1].argmax()][0])
 
+    mask = np.zeros_like(image)
+
+    #roi_vertices = np.array([left, right, top, bottom], np.int32)
+    #cv2.fillPoly(mask, [roi_vertices], (255, 255, 255))
+
+    #cv2.imshow("mask", mask)
+
     # draw connecting line
-    #cv2.line(image, left, right, (0,0,255), 2)
+    cv2.line(image, left, right, (0,0,255), 2)
 
     # find the point of intersection
     # b/w connecting lines and curve points
@@ -55,15 +67,15 @@ def detect(image):
     l2 = line((bottom[0], top[1]), bottom)
     inter = intersection(l1, l2)
 
-    # draw center curve intersection line
-    #cv2.line(image, inter, bottom, (255, 255, 0), 2)
+    #draw center curve intersection line
+    cv2.line(image, inter, bottom, (255, 255, 0), 2)
 
     # draw line contours
     cv2.drawContours(image, [c], -1, (36, 255, 12), 2)
 
     return image
 
-image = cv2.imread("curve.jpg")
+image = cv2.imread("curves.png")
 output = detect(image)
 
 cv2.imshow("final",output)
