@@ -8,10 +8,17 @@ import numpy as np
 def detect(image):
     # some preprocessing
     thin = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-    cv2.imshow("gray", thin)
-    thin = cv2.blur(thin, (20, 20))
+    #cv2.imshow("gray", thin)
+    thin = cv2.blur(thin, (50, 50))
     cv2.imshow("blur", thin)
-    _, thin = cv2.threshold(thin, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    hsv_image = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    lower_white = np.array([0, 0, 168])
+    upper_white = np.array([172, 111, 255])
+    mask = cv2.inRange(hsv_image, lower_white, upper_white)
+
+    hsvapplied = cv2.bitwise_and(img, img, mask=mask)
+
+    _, thin = cv2.threshold(thin, 120, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     cv2.imshow("threshold", thin)
 
     #vertices = np.array([[(100, 100), (400, 100), (400, 400), (100, 400)]], dtype=np.int32)
