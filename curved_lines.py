@@ -1,58 +1,67 @@
 import cv2
 import numpy as np
 
+# Emma Chetan Parallel Curved Lines and Centerline Project PWP
 
-# https://forum.opencv.org/t/detecting-the-center-of-a-curved-thick-line-in-python-using-opencv/1909
-
+# Key features of the detect() function:
+#   1. Takes in an image in format .jpg, .jpeg, .png
+#   2. Image processing to reduce any noise using opencv functions
+#      such as COLOR_RGB2GRAY (grayscale conversion), blur, adaptive
+#      thresholding, findContours, drawContours, and .shape (returning
+#      dimensions of an image).
+#   3. The use of the Guo Hall thinning algorithm to detect the center line.
+#   4. A raw video stream where for each frame, the parallel curved lines and
+#      center line are drawn.
 
 def detect(image):
-    # some preprocessing
-    thin = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-    #cv2.imshow("gray", thin)
-    thin = cv2.blur(thin, (50, 50))
-    cv2.imshow("blur", thin)
-    hsv_image = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    lower_white = np.array([0, 0, 168])
-    upper_white = np.array([172, 111, 255])
-    mask = cv2.inRange(hsv_image, lower_white, upper_white)
 
-    hsvapplied = cv2.bitwise_and(img, img, mask=mask)
+    # Convert the image to grayscale.
+    gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
 
-    _, thin = cv2.threshold(thin, 120, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    cv2.imshow("threshold", thin)
+    # Apply a blur to reduce noise on the image.
+    blur = cv2.blur(gray, (5, 5), 0)
 
-    #vertices = np.array([[(100, 100), (400, 100), (400, 400), (100, 400)]], dtype=np.int32)
-
-    #mask = np.zeros_like(thin)
-
-    #ROI = cv2.fillPoly(mask, vertices, 255)
-
-    #region_of_interest = cv2.bitwise_and(thin, ROI)
-
+    #https://pyimagesearch.com/2021/05/12/adaptive-thresholding-with-opencv-cv2-adaptivethreshold/
+    # Use adaptive thresholding, where each pizel contributes to computing the
+    # optimal T, or threshold, value.
+    thresh = cv2.adaptiveThreshold(blur, 255,
+	cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 21, 10)
 
     # https://stackoverflow.com/questions/19222343/filling-contours-with-opencv-python
-    contours, hierarchy = cv2.findContours(thin, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    # Find contours after applying thresholding. This should return the contours
+    # of the parallel curved lines.
+    contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
+    # Draw the contour of one of the parallel curved lines in red.
     cv2.drawContours(image, contours, 2, (0,0,255), thickness= 10)
+
+    # Draw the contours of the other parallel curved line in red.
     cv2.drawContours(image, contours , 1, (0,0,255), thickness = 10)
 
-    # thin image to find clear contours
-    thin = cv2.ximgproc.thinning(thin, thinningType=cv2.ximgproc.THINNING_GUOHALL)
-    cv2.imshow("thin", thin)
+    # https://arxiv.org/pdf/1710.03025#:~:text=This%20paper%20proposes%20a%20sequential%20algorithm%20that%20is,and%203D%20patterns%20and%20showed%20very%20good%20results.
+    # The thinning function uses the Guo Hall thinning algorithm, which returns a 1 pixel-wide,
+    # connected, centered skeleton inside a given component, in this case the two curved
+    # parallel lines.
+    thin = cv2.ximgproc.thinning(thresh, thinningType=cv2.ximgproc.THINNING_GUOHALL)
 
-    # dind contours
+    # Find the contours of the skeleton structure.
     cnts, _ = cv2.findContours(thin, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-    # cnts = cnts[0] if len(cnts) == 2 else cnts[1]
-    # c = max(cnts, key=cv2.contourArea)
-
+    # Draw the contours of the skeleton, or center line, structure.
     cv2.drawContours(image, cnts, 1, (36, 255, 12), 2)
-    #image = cv2.polylines(final, [vertices], True, (0,0,255), 1)
+    
     rows, columns = image.shape[0], image.shape[1]
-    cropped = image[100:rows-100, 100:columns-100]
+
+    # Crop the image to get rid of reduntant detected contours.
+    cropped = image[10:rows-10, 10:columns-10]
+
     return cropped
 
-cap = cv2.VideoCapture(0)  # 0 for default camera, or provide a video file path
+# Run a live video stream where the detect() function is applied to
+# draw on the parallel curved lines and centerline.
+
+# Opens the camera stream on the default camera
+cap = cv2.VideoCapture(0)
 
 if cap.isOpened():
 
@@ -67,9 +76,9 @@ if cap.isOpened():
             if success == True:
 
                 # Display the frame.
-                cv2.imshow("Emma Chetan Circumference and Center Video PWP", detect(frame))
+                cv2.imshow("Emma Chetan Parallel Curved Lines and Centerline PWP", detect(frame))
 
-                # Check if the user pressed 'q' to quit.
+                # Check if the user pressed 'q' to end the program.
                 if cv2.waitKey(25) == ord('q'):
 
                     break
